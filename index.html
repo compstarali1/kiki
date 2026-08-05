@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>For My Kiki</title>
+    <title>For My kiki</title>
     <style>
         * {
             margin: 0;
@@ -31,13 +31,65 @@
             z-index: 1;
         }
 
-        /* ✅ BUTTON — 50% TRANSPARENT — 25% UP FROM BOTTOM — CENTERED HORIZONTALLY */
-        .play-btn {
+        /* ✅ 3D PROGRESS BAR — Click to Seek Position */
+        .progress-container {
             position: fixed;
-            bottom: 25%; /* ✅ 25% from bottom of screen */
+            bottom: 18%; /* ✅ Lifted button UP — bar sits below it */
             left: 50%;
             transform: translateX(-50%);
-            z-index: 99999; /* ✅ Always on top */
+            width: 42vw;
+            min-width: 300px;
+            max-width: 500px;
+            height: 28px;
+            z-index: 99999;
+            cursor: pointer;
+
+            /* 3D Track */
+            background: linear-gradient(180deg, #3a0f25, #1a0512);
+            border-radius: 14px;
+            border: 3px solid rgba(255,255,255,0.35);
+            box-shadow:
+                inset 0 4px 8px rgba(0,0,0,0.7),
+                inset 0 -2px 4px rgba(107,0,46,0.3),
+                0 6px 12px rgba(0,0,0,0.5);
+            overflow: hidden;
+        }
+
+        /* ✅ 3D Progress Fill — Glowing Pink */
+        .progress-fill {
+            height: 100%;
+            width: 0%;
+            border-radius: 12px;
+            background: linear-gradient(180deg, #ff66aa, #cc2277, #990044);
+            box-shadow:
+                inset 0 3px 6px rgba(255,255,255,0.4),
+                inset 0 -3px 6px rgba(107,0,46,0.4),
+                0 0 15px rgba(255,77,166,0.5);
+            transition: width 0.1s linear;
+        }
+
+        /* ✅ TIME DISPLAY — Above Bar */
+        .time-display {
+            position: fixed;
+            bottom: 21%;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 99999;
+            color: #fff;
+            font-size: 16px;
+            font-weight: bold;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.6);
+            letter-spacing: 1px;
+            pointer-events: none;
+        }
+
+        /* ✅ BUTTON — LIFTED UP — 50% TRANSPARENT — 25% UP FROM BOTTOM */
+        .play-btn {
+            position: fixed;
+            bottom: 28%; /* ✅ LIFTED UP — moved higher so bar fits below */
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 99999;
 
             /* 📏 Large responsive size */
             min-width: 300px;
@@ -56,10 +108,10 @@
             background: linear-gradient(145deg, rgba(255,77,166,0.5), rgba(153,0,68,0.5));
             border: 6px solid rgba(255,255,255,0.6);
             border-radius: 28px;
-            opacity: 0.5; /* ✅ EXACTLY 50% TRANSPARENT */
+            opacity: 0.5;
 
-            /* 🔥 DEEP 3D SHADOWS — still visible through transparency */
-            box-shadow: 
+            /* 🔥 DEEP 3D SHADOWS */
+            box-shadow:
                 0 20px 0 rgba(107,0,46,0.4),
                 0 30px 50px rgba(0,0,0,0.35),
                 inset 0 4px 0 rgba(255,255,255,0.25);
@@ -75,7 +127,7 @@
         .play-btn:hover {
             opacity: 0.75;
             transform: translateX(-50%) translateY(-8px);
-            box-shadow: 
+            box-shadow:
                 0 28px 0 rgba(107,0,46,0.45),
                 0 40px 60px rgba(0,0,0,0.4),
                 inset 0 5px 0 rgba(255,255,255,0.35);
@@ -85,7 +137,7 @@
         .play-btn:active {
             opacity: 0.6;
             transform: translateX(-50%) translateY(10px);
-            box-shadow: 
+            box-shadow:
                 0 10px 0 rgba(107,0,46,0.35),
                 0 15px 25px rgba(0,0,0,0.25),
                 inset 0 2px 0 rgba(255,255,255,0.2);
@@ -98,13 +150,78 @@
 
     <div class="bg-image"></div>
 
-    <!-- ✅ 50% TRANSPARENT BUTTON — 25% FROM BOTTOM -->
-    <button class="play-btn" onclick="document.getElementById('audio').play()">
-        💖 PLAY FOR MY KIKI 💖
+    <!-- ⏱️ Time Display -->
+    <div class="time-display" id="time">00:00 / 00:00</div>
+
+    <!-- ✅ 3D PROGRESS BAR — Click to Seek -->
+    <div class="progress-container" id="seekBar" onclick="seekAudio(event)">
+        <div class="progress-fill" id="progressFill"></div>
+    </div>
+
+    <!-- ✅ PLAY BUTTON — Lifted Higher -->
+    <button class="play-btn" id="playBtn" onclick="toggleAudio()">
+        💖 PLAY FOR MY kiki 💖
     </button>
 
     <audio id="audio" src="kiki.mp3" preload="auto">
 
+    <script>
+        const audio = document.getElementById('audio');
+        const progressFill = document.getElementById('progressFill');
+        const timeDisplay = document.getElementById('time');
+        const playBtn = document.getElementById('playBtn');
+        const seekBar = document.getElementById('seekBar');
+
+        let isPlaying = false;
+
+        // ✅ Toggle Play / Pause
+        function toggleAudio() {
+            if (!isPlaying) {
+                audio.currentTime = 0;
+                audio.play();
+                isPlaying = true;
+                playBtn.innerHTML = '💖 PAUSE 💖';
+            } else {
+                audio.pause();
+                isPlaying = false;
+                playBtn.innerHTML = '💖 PLAY FOR MY kiki 💖';
+            }
+        }
+
+        // ✅ Click Progress Bar to Seek Position
+        function seekAudio(event) {
+            const rect = seekBar.getBoundingClientRect();
+            const clickX = event.clientX - rect.left;
+            const percent = clickX / rect.width;
+            if (audio.duration) {
+                audio.currentTime = percent * audio.duration;
+            }
+        }
+
+        // ✅ Update Progress Bar + Time
+        audio.addEventListener('timeupdate', () => {
+            if (audio.duration) {
+                const percent = (audio.currentTime / audio.duration) * 100;
+                progressFill.style.width = percent + '%';
+
+                // Format time MM:SS
+                const formatTime = (secs) => {
+                    const m = Math.floor(secs / 60) || 0;
+                    const s = Math.floor(secs % 60) || 0;
+                    return `${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
+                };
+                timeDisplay.textContent = `${formatTime(audio.currentTime)} / ${formatTime(audio.duration)}`;
+            }
+        });
+
+        // ✅ Reset when audio ends
+        audio.addEventListener('ended', () => {
+            progressFill.style.width = '0%';
+            timeDisplay.textContent = '00:00 / 00:00';
+            isPlaying = false;
+            playBtn.innerHTML = '💖 PLAY FOR MY kiki 💖';
+        });
+    </script>
+
 </body>
 </html>
-
